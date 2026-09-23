@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+/* One fixed theme. There is deliberately no light/dark toggle and no `.dark`
+   class — a single palette keeps every surface predictable and means no
+   component has to be designed twice. */
+:root {
+  --bg: #16161a;
+  --surface: #1e1e24;
+  --surface-hover: #24242c;
+  --elevated: #2a2a33;
+  --border: #2a2a32;
+  --border-strong: #3a3a45;
+
+  --text: #e8e8ed;
+  --muted: #9a9aa8;
+  --faint: #6e6e7c;
+
+  --accent: #7c6cf0;
+  --accent-hover: #8b7cf5;
+  --accent-soft: #221f3d;
+  --on-accent: #ffffff;
+
+  --danger: #f2555a;
+  --danger-soft: #3a1d22;
+  --success: #3fb884;
+  --success-soft: #16302a;
+  --warning: #e0a244;
+  --warning-soft: #33271420;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-elevated: var(--elevated);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* This is a keyboard-heavy tool — every interactive element keeps a ring. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Numbers line up in tables without needing a per-cell utility. */
+  th,
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 6px;
+    border: 2px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--faint);
+  }
+}
+
+@layer utilities {
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+}
