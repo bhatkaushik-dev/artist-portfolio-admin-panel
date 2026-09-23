@@ -37,22 +37,24 @@ export default async function ArtistsPage({
             description="Create the first one to get started."
           />
         ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-border text-[12px] text-muted">
-                <th className="px-5 py-2.5 font-medium">Name</th>
-                <th className="px-5 py-2.5 font-medium">Slug</th>
-                <th className="px-5 py-2.5 font-medium">Created</th>
-                <th className="px-5 py-2.5 font-medium">Status</th>
-                <th className="px-5 py-2.5" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {tenants.map((tenant) => (
-                <ArtistRow key={tenant.id} tenant={tenant} created={formatDate(tenant.created_at)} />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-140 text-left">
+              <thead>
+                <tr className="border-b border-border text-[12px] text-muted">
+                  <th className="px-5 py-2.5 font-medium">Name</th>
+                  <th className="hidden px-5 py-2.5 font-medium sm:table-cell">Slug</th>
+                  <th className="hidden px-5 py-2.5 font-medium sm:table-cell">Created</th>
+                  <th className="px-5 py-2.5 font-medium">Status</th>
+                  <th className="px-5 py-2.5" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {tenants.map((tenant) => (
+                  <ArtistRow key={tenant.id} tenant={tenant} created={formatDate(tenant.created_at)} />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
 

@@ -32,7 +32,7 @@ export function VideoCard({ video }: { video: Video }) {
 
   return (
     <div className="card overflow-hidden">
-      <div className="flex items-start gap-4 p-4">
+      <div className="flex flex-wrap items-start gap-4 p-4">
         {video.thumbnail_url ? (
           // Plain <img>: dimensions are known and these are already-optimised
           // remote thumbnails, so next/image would only burn Vercel quota.

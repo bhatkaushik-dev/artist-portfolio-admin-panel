@@ -12,6 +12,7 @@ import {
 
 import { logoutAction, stopActingAction } from "@/lib/actions/auth";
 import { Badge, Button } from "@/components/ui/base";
+import { MobileSidebar } from "./mobile-sidebar";
 import { NavLink } from "./nav-link";
 
 const ICON = 15;
@@ -45,14 +46,7 @@ export function Shell({
 }) {
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-[232px] shrink-0 flex-col border-r border-border bg-surface">
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-soft text-[13px] font-semibold text-accent">
-            ◈
-          </div>
-          <span className="text-[13px] font-semibold tracking-tight">Portfolio Admin</span>
-        </div>
-
+      <MobileSidebar>
         {tenantName && (
           <div className="mx-3 mb-3 rounded-lg border border-border bg-bg px-3 py-2.5">
             <p className="text-[11px] uppercase tracking-wide text-faint">Editing</p>
@@ -117,16 +111,18 @@ export function Shell({
             </Button>
           </form>
         </div>
-      </aside>
+      </MobileSidebar>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
         {actingAsSuper && (
-          <div className="flex items-center gap-2 border-b border-accent/25 bg-accent-soft px-8 py-2 text-[12px] text-accent">
+          <div className="flex items-center gap-2 border-b border-accent/25 bg-accent-soft px-4 py-2 text-[12px] text-accent md:px-8">
             <Badge tone="accent">Super admin</Badge>
             You are editing <strong className="font-semibold">{tenantName}</strong> on their behalf.
           </div>
         )}
-        <main className="mx-auto w-full max-w-5xl flex-1 px-8 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );

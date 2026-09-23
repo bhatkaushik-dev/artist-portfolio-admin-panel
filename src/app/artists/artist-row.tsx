@@ -23,8 +23,10 @@ export function ArtistRow({ tenant, created }: { tenant: Tenant; created: string
   return (
     <tr className="text-[13px] transition-colors hover:bg-surface-hover">
       <td className="px-5 py-3 font-medium">{tenant.name}</td>
-      <td className="px-5 py-3 font-mono text-[12px] text-muted">{tenant.slug}</td>
-      <td className="px-5 py-3 text-muted">{created}</td>
+      <td className="hidden px-5 py-3 font-mono text-[12px] text-muted sm:table-cell">
+        {tenant.slug}
+      </td>
+      <td className="hidden px-5 py-3 text-muted sm:table-cell">{created}</td>
       <td className="px-5 py-3">
         <Badge tone={tenant.is_active ? "success" : "neutral"}>
           {tenant.is_active ? "active" : "disabled"}

@@ -60,7 +60,10 @@ export const Tabs = TabsPrimitive.Root;
 export function TabsList({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-      className={cn("inline-flex items-center gap-1 rounded-lg border border-border bg-surface p-1", className)}
+      className={cn(
+        "inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1",
+        className,
+      )}
       {...props}
     />
   );
