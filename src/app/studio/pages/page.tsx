@@ -3,16 +3,23 @@ import { ChevronRight } from "lucide-react";
 
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/base";
 import { listPages } from "@/lib/api/resources";
+import { SITE_PAGE_ORDER } from "@/lib/schemas/page";
 import { formatDateTime } from "@/lib/utils";
 
 export const metadata = { title: "Pages · Portfolio Admin" };
 
+/** Site pages in nav order, then anything else alphabetically (the API's order). */
+const rank = (slug: string) => {
+  const i = SITE_PAGE_ORDER.indexOf(slug);
+  return i === -1 ? SITE_PAGE_ORDER.length : i;
+};
+
 export default async function PagesPage() {
-  const pages = await listPages();
+  const pages = (await listPages()).sort((a, b) => rank(a.slug) - rank(b.slug));
 
   return (
     <>
-      <PageHeader title="Pages" description="Copy, structured blocks and SEO for each route." />
+      <PageHeader title="Pages" description="Header, content and SEO for each route." />
 
       <Card>
         {pages.length === 0 ? (
@@ -36,7 +43,14 @@ export default async function PagesPage() {
                       </Badge>
                       {page.noindex && <Badge>noindex</Badge>}
                     </div>
-                    <p className="mt-0.5 font-mono text-[11px] text-faint">/{page.slug}</p>
+                    <p className="mt-0.5 truncate text-[11px] text-faint">
+                      <span className="font-mono">{page.slug === "home" ? "/" : `/${page.slug}`}</span>
+                      {page.heading && (
+                        <span className="ml-2">
+                          {page.heading} {page.highlight}
+                        </span>
+                      )}
+                    </p>
                   </div>
                   <span className="shrink-0 text-[12px] text-muted">
                     {formatDateTime(page.updated_at)}

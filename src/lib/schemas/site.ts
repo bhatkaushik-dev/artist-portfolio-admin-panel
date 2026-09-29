@@ -10,9 +10,16 @@ const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 // These are `extra="ignore"` server-side, not `extra="forbid"` like the top
 // level, so an unknown key inside one is dropped rather than rejected.
 
+/**
+ * `locality` is the neighbourhood ("JP Nagar 1st Phase") and `city` is what
+ * JSON-LD calls addressLocality. `area` is the short form used in running copy.
+ */
 export const addressSchema = z.object({
+  venue: optionalString(),
   street_address: optionalString(),
   locality: optionalString(),
+  area: optionalString(),
+  city: optionalString(),
   region: optionalString(),
   postal_code: optionalString(),
   country: z.string().trim().default("IN"),
@@ -24,11 +31,27 @@ export const socialLinkSchema = z.object({
   handle: optionalString(),
 });
 
-export const trainingEntrySchema = z.object({
-  institution: optionalString(),
-  teacher: optionalString(),
-  gharana: optionalString(),
-  years: optionalString(),
+const optionalInt = (min: number, max: number) =>
+  z.number().int().min(min).max(max).nullable();
+
+/** One summary object, repeated across the home, about and classes pages. */
+export const trainingSummarySchema = z.object({
+  start_age: optionalInt(1, 120),
+  years: optionalInt(0, 120),
+  teacher: optionalString(160),
+  father: optionalString(160),
+  grade: optionalString(40),
+  grading_body: optionalString(160),
+});
+
+/** The teaching practice, as its own MusicSchool entity in JSON-LD. */
+export const schoolSchema = z.object({
+  name: optionalString(200),
+  alternate_name: optionalString(200),
+  description: optionalString(),
+  image_url: optionalString(512),
+  offer_catalog_name: optionalString(200),
+  offerings: stringList,
 });
 
 export const awardSchema = z.object({
@@ -68,7 +91,7 @@ export const siteProfileReadSchema = z
     geo_lng: z.number().nullable(),
     area_served: z.array(z.string()),
     social_links: z.array(z.looseObject({})),
-    training: z.array(z.looseObject({})),
+    training: z.looseObject({}).catch({}),
     alternate_names: z.array(z.string()),
     knows_about: z.array(z.string()),
     knows_language: z.array(z.string()),
@@ -76,7 +99,11 @@ export const siteProfileReadSchema = z
     opening_hours: z.array(z.looseObject({})),
     price_range: z.string().nullable(),
     currencies_accepted: z.array(z.string()),
+    school: z.looseObject({}).catch({}),
+    image_credit_text: z.string().nullable(),
+    image_copyright_notice: z.string().nullable(),
     image_license_url: z.string().nullable(),
+    image_acquire_license_url: z.string().nullable(),
     default_image_url: z.string().nullable(),
     logo_url: z.string().nullable(),
     bio_summary: z.string().nullable(),
@@ -116,7 +143,7 @@ export const siteProfileUpdateSchema = z.strictObject({
   area_served: stringList.optional(),
 
   social_links: z.array(socialLinkSchema).optional(),
-  training: z.array(trainingEntrySchema).optional(),
+  training: trainingSummarySchema.optional(),
 
   alternate_names: stringList.optional(),
   knows_about: stringList.optional(),
@@ -126,8 +153,12 @@ export const siteProfileUpdateSchema = z.strictObject({
   opening_hours: z.array(openingHoursSchema).optional(),
   price_range: optionalString(40).optional(),
   currencies_accepted: stringList.optional(),
+  school: schoolSchema.optional(),
 
+  image_credit_text: optionalString(160).optional(),
+  image_copyright_notice: optionalString(200).optional(),
   image_license_url: optionalString(512).optional(),
+  image_acquire_license_url: optionalString(512).optional(),
   default_image_url: optionalString(512).optional(),
   logo_url: optionalString(512).optional(),
 

@@ -7,6 +7,24 @@ import { toFormResult, type FormResult } from "@/lib/api/errors";
 import { blocksJsonSchema, pageUpdateSchema } from "@/lib/schemas/page";
 import { requireTenantContext } from "@/lib/session/session";
 
+/**
+ * The API validates each page's block shapes and reports e.g.
+ * `blocks.chapters.0.id`. The editor has one error slot for blocks, so fold
+ * those into it, keeping the path so the message says where to look.
+ */
+function foldBlockErrors(result: FormResult<never>): FormResult<never> {
+  if (result.ok || !result.fieldErrors) return result;
+  const fieldErrors: Record<string, string> = {};
+  for (const [path, message] of Object.entries(result.fieldErrors)) {
+    if (path.startsWith("blocks.")) {
+      fieldErrors.blocks ??= `${path.slice("blocks.".length)}: ${message}`;
+    } else {
+      fieldErrors[path] = message;
+    }
+  }
+  return { ...result, fieldErrors };
+}
+
 export async function updatePageAction(
   _prev: FormResult<null>,
   formData: FormData,
@@ -30,12 +48,18 @@ export async function updatePageAction(
   const parsed = pageUpdateSchema.safeParse({
     title: String(formData.get("title") ?? ""),
     subtitle: String(formData.get("subtitle") ?? ""),
+    eyebrow: String(formData.get("eyebrow") ?? ""),
+    heading: String(formData.get("heading") ?? ""),
+    highlight: String(formData.get("highlight") ?? ""),
     intro: String(formData.get("intro") ?? ""),
+    header_photo_id: String(formData.get("header_photo_id") ?? ""),
     body: String(formData.get("body") ?? ""),
     blocks: rawBlocks.trim() ? JSON.parse(rawBlocks) : {},
     is_published: formData.get("is_published") === "on",
     seo_title: String(formData.get("seo_title") ?? ""),
     seo_description: String(formData.get("seo_description") ?? ""),
+    og_title: String(formData.get("og_title") ?? ""),
+    og_description: String(formData.get("og_description") ?? ""),
     seo_keywords: keywords,
     canonical_path: String(formData.get("canonical_path") ?? ""),
     og_image_url: String(formData.get("og_image_url") ?? ""),
@@ -49,7 +73,7 @@ export async function updatePageAction(
   try {
     await updatePage(slug, parsed.data);
   } catch (error) {
-    return toFormResult(error);
+    return foldBlockErrors(toFormResult(error));
   }
 
   revalidatePath("/studio/pages");

@@ -4,19 +4,28 @@ import { boundedString, isoDateTime, optionalString, stringList } from "./common
 
 export const SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
 
+/** The routes the portfolio renders, in its nav order. */
+export const SITE_PAGE_ORDER = ["home", "about", "performances", "gallery", "classes", "contact"];
+
 export const pageReadSchema = z
   .object({
     id: z.string(),
     slug: z.string(),
     title: z.string(),
     subtitle: z.string().nullable(),
+    eyebrow: z.string().nullable(),
+    heading: z.string().nullable(),
+    highlight: z.string().nullable(),
     intro: z.string().nullable(),
+    header_photo_id: z.string().nullable(),
     body: z.string().nullable(),
     blocks: z.looseObject({}).catch({}),
     is_published: z.boolean(),
     updated_at: isoDateTime,
     seo_title: z.string().nullable(),
     seo_description: z.string().nullable(),
+    og_title: z.string().nullable(),
+    og_description: z.string().nullable(),
     seo_keywords: z.array(z.string()),
     canonical_path: z.string().nullable(),
     og_image_url: z.string().nullable(),
@@ -30,12 +39,22 @@ export type Page = z.infer<typeof pageReadSchema>;
 export const pageUpdateSchema = z.strictObject({
   title: boundedString(1, 200, "Title").optional(),
   subtitle: optionalString(320).optional(),
+  eyebrow: optionalString(120).optional(),
+  heading: optionalString(200).optional(),
+  highlight: optionalString(200).optional(),
   intro: optionalString().optional(),
+  header_photo_id: z
+    .union([z.literal(""), z.uuid("Pick a photo from the library")])
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional(),
   body: optionalString().optional(),
   blocks: z.record(z.string(), z.unknown()).optional(),
   is_published: z.boolean().optional(),
   seo_title: optionalString(200).optional(),
   seo_description: optionalString(400).optional(),
+  og_title: optionalString(200).optional(),
+  og_description: optionalString(400).optional(),
   seo_keywords: stringList.optional(),
   canonical_path: optionalString(255).optional(),
   og_image_url: optionalString(512).optional(),

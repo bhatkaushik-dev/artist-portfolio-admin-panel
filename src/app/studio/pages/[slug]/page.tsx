@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/base";
-import { getPage } from "@/lib/api/resources";
+import { getPage, listPhotos } from "@/lib/api/resources";
 import { ApiError } from "@/lib/api/errors";
 import { PageEditor } from "./page-editor";
 
@@ -15,8 +15,10 @@ export default async function PageDetail({
   const { slug } = await params;
 
   let page;
+  let photos;
   try {
-    page = await getPage(slug);
+    // Every set, hidden ones included: a page may reference any library photo.
+    [page, photos] = await Promise.all([getPage(slug), listPhotos({ includeInactive: true })]);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) notFound();
     throw error;
@@ -32,9 +34,12 @@ export default async function PageDetail({
         All pages
       </Link>
 
-      <PageHeader title={page.title} description={`/${page.slug}`} />
+      <PageHeader
+        title={page.title}
+        description={page.canonical_path ?? (page.slug === "home" ? "/" : `/${page.slug}`)}
+      />
 
-      <PageEditor page={page} />
+      <PageEditor page={page} photos={photos} />
     </>
   );
 }

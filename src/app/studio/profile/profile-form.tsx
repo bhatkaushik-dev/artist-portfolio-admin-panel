@@ -31,8 +31,11 @@ type FormValues = {
   phone_display: string;
   website_url: string;
   address: {
+    venue: string;
     street_address: string;
     locality: string;
+    area: string;
+    city: string;
     region: string;
     postal_code: string;
     country: string;
@@ -45,15 +48,39 @@ type FormValues = {
   knows_language: string[];
   currencies_accepted: string[];
   social_links: { platform: string; url: string; handle: string }[];
-  training: { institution: string; teacher: string; gharana: string; years: string }[];
+  // Numbers are edited as strings so an empty box can mean "not set".
+  training: {
+    start_age: string;
+    years: string;
+    teacher: string;
+    father: string;
+    grade: string;
+    grading_body: string;
+  };
   awards: { title: string; awarded_by: string; year: string }[];
   opening_hours: { days: string[]; opens: string; closes: string }[];
+  school: {
+    name: string;
+    alternate_name: string;
+    description: string;
+    image_url: string;
+    offer_catalog_name: string;
+    offerings: string[];
+  };
+  default_image_url: string;
+  image_credit_text: string;
+  image_copyright_notice: string;
+  image_license_url: string;
+  image_acquire_license_url: string;
 };
 
 const str = (v: unknown) => (typeof v === "string" ? v : "");
+const num = (v: unknown) => (typeof v === "number" ? String(v) : "");
 
 function toFormValues(p: SiteProfile): FormValues {
   const address = (p.address ?? {}) as Record<string, unknown>;
+  const training = (p.training ?? {}) as Record<string, unknown>;
+  const school = (p.school ?? {}) as Record<string, unknown>;
   return {
     name: p.name ?? "",
     short_name: p.short_name ?? "",
@@ -65,8 +92,11 @@ function toFormValues(p: SiteProfile): FormValues {
     phone_display: p.phone_display ?? "",
     website_url: p.website_url ?? "",
     address: {
+      venue: str(address.venue),
       street_address: str(address.street_address),
       locality: str(address.locality),
+      area: str(address.area),
+      city: str(address.city),
       region: str(address.region),
       postal_code: str(address.postal_code),
       country: str(address.country) || "IN",
@@ -82,15 +112,14 @@ function toFormValues(p: SiteProfile): FormValues {
       const o = s as Record<string, unknown>;
       return { platform: str(o.platform), url: str(o.url), handle: str(o.handle) };
     }),
-    training: (p.training ?? []).map((t) => {
-      const o = t as Record<string, unknown>;
-      return {
-        institution: str(o.institution),
-        teacher: str(o.teacher),
-        gharana: str(o.gharana),
-        years: str(o.years),
-      };
-    }),
+    training: {
+      start_age: num(training.start_age),
+      years: num(training.years),
+      teacher: str(training.teacher),
+      father: str(training.father),
+      grade: str(training.grade),
+      grading_body: str(training.grading_body),
+    },
     awards: (p.awards ?? []).map((a) => {
       const o = a as Record<string, unknown>;
       return {
@@ -107,11 +136,25 @@ function toFormValues(p: SiteProfile): FormValues {
         closes: str(o.closes),
       };
     }),
+    school: {
+      name: str(school.name),
+      alternate_name: str(school.alternate_name),
+      description: str(school.description),
+      image_url: str(school.image_url),
+      offer_catalog_name: str(school.offer_catalog_name),
+      offerings: Array.isArray(school.offerings) ? (school.offerings as string[]) : [],
+    },
+    default_image_url: p.default_image_url ?? "",
+    image_credit_text: p.image_credit_text ?? "",
+    image_copyright_notice: p.image_copyright_notice ?? "",
+    image_license_url: p.image_license_url ?? "",
+    image_acquire_license_url: p.image_acquire_license_url ?? "",
   };
 }
 
 /** Empty strings must become null, or the API rejects them (`""` is not an email). */
 const nullable = (v: string) => (v.trim() === "" ? null : v.trim());
+const nullableInt = (v: string) => (v.trim() === "" ? null : Number(v));
 
 function toPayload(v: FormValues) {
   return {
@@ -125,8 +168,11 @@ function toPayload(v: FormValues) {
     phone_display: nullable(v.phone_display),
     website_url: nullable(v.website_url),
     address: {
+      venue: nullable(v.address.venue),
       street_address: nullable(v.address.street_address),
       locality: nullable(v.address.locality),
+      area: nullable(v.address.area),
+      city: nullable(v.address.city),
       region: nullable(v.address.region),
       postal_code: nullable(v.address.postal_code),
       country: v.address.country.trim() || "IN",
@@ -141,12 +187,14 @@ function toPayload(v: FormValues) {
     social_links: v.social_links
       .filter((s) => s.platform.trim() && s.url.trim())
       .map((s) => ({ platform: s.platform.trim(), url: s.url.trim(), handle: nullable(s.handle) })),
-    training: v.training.map((t) => ({
-      institution: nullable(t.institution),
-      teacher: nullable(t.teacher),
-      gharana: nullable(t.gharana),
-      years: nullable(t.years),
-    })),
+    training: {
+      start_age: nullableInt(v.training.start_age),
+      years: nullableInt(v.training.years),
+      teacher: nullable(v.training.teacher),
+      father: nullable(v.training.father),
+      grade: nullable(v.training.grade),
+      grading_body: nullable(v.training.grading_body),
+    },
     awards: v.awards
       .filter((a) => a.title.trim())
       .map((a) => ({
@@ -159,6 +207,19 @@ function toPayload(v: FormValues) {
       opens: h.opens,
       closes: h.closes,
     })),
+    school: {
+      name: nullable(v.school.name),
+      alternate_name: nullable(v.school.alternate_name),
+      description: nullable(v.school.description),
+      image_url: nullable(v.school.image_url),
+      offer_catalog_name: nullable(v.school.offer_catalog_name),
+      offerings: v.school.offerings,
+    },
+    default_image_url: nullable(v.default_image_url),
+    image_credit_text: nullable(v.image_credit_text),
+    image_copyright_notice: nullable(v.image_copyright_notice),
+    image_license_url: nullable(v.image_license_url),
+    image_acquire_license_url: nullable(v.image_acquire_license_url),
   };
 }
 
@@ -172,7 +233,6 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
   const errors = formState.errors;
 
   const social = useFieldArray({ control, name: "social_links" });
-  const training = useFieldArray({ control, name: "training" });
   const awards = useFieldArray({ control, name: "awards" });
   const hours = useFieldArray({ control, name: "opening_hours" });
 
@@ -213,7 +273,8 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
           <TabsTrigger value="identity">Identity</TabsTrigger>
           <TabsTrigger value="contact">Contact</TabsTrigger>
           <TabsTrigger value="background">Background</TabsTrigger>
-          <TabsTrigger value="business">Business</TabsTrigger>
+          <TabsTrigger value="business">Classes</TabsTrigger>
+          <TabsTrigger value="images">Images</TabsTrigger>
         </TabsList>
 
         <TabsContent value="identity">
@@ -271,12 +332,39 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
               </Field>
             </div>
 
+            <p className="-mb-1 text-[12px] text-faint">
+              Write the address exactly as the venue publishes it. The site, its
+              structured data and directory listings all repeat it character for
+              character.
+            </p>
             <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label="Venue"
+                hint="Building or school the classes are held in"
+                error={errors.address?.venue?.message}
+                className="sm:col-span-2"
+              >
+                <Input {...register("address.venue")} />
+              </Field>
               <Field label="Street" error={errors.address?.street_address?.message}>
                 <Input {...register("address.street_address")} />
               </Field>
-              <Field label="City" error={errors.address?.locality?.message}>
+              <Field
+                label="Locality"
+                hint="Neighbourhood, e.g. JP Nagar 1st Phase"
+                error={errors.address?.locality?.message}
+              >
                 <Input {...register("address.locality")} />
+              </Field>
+              <Field
+                label="Area (short)"
+                hint="Used in running copy, e.g. JP Nagar"
+                error={errors.address?.area?.message}
+              >
+                <Input {...register("address.area")} />
+              </Field>
+              <Field label="City" error={errors.address?.city?.message}>
+                <Input {...register("address.city")} />
               </Field>
               <Field label="State" error={errors.address?.region?.message}>
                 <Input {...register("address.region")} />
@@ -319,23 +407,39 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
 
         <TabsContent value="background">
           <Card className="flex flex-col gap-5 p-5">
-            <Repeatable
-              label="Training"
-              hint="Where and with whom they studied."
-              rows={training.fields}
-              onAdd={() => training.append({ institution: "", teacher: "", gharana: "", years: "" })}
-              onRemove={training.remove}
-              addLabel="Add entry"
-            >
-              {(_row, i) => (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Input placeholder="Institution" {...register(`training.${i}.institution`)} />
-                  <Input placeholder="Teacher" {...register(`training.${i}.teacher`)} />
-                  <Input placeholder="Gharana" {...register(`training.${i}.gharana`)} />
-                  <Input placeholder="Years, e.g. 2005–2012" {...register(`training.${i}.years`)} />
-                </div>
-              )}
-            </Repeatable>
+            <div className="flex flex-col gap-3">
+              <div>
+                <p className="text-[13px] font-medium text-text">Training</p>
+                <p className="mt-0.5 text-[12px] text-faint">
+                  The credentials shown in the home hero, the about page facts and the
+                  classes intro — edit once here and every page follows.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Years of training" error={errors.training?.years?.message}>
+                  <Input type="number" min={0} {...register("training.years")} />
+                </Field>
+                <Field label="Started at age" error={errors.training?.start_age?.message}>
+                  <Input type="number" min={1} {...register("training.start_age")} />
+                </Field>
+                <Field label="Guru" error={errors.training?.teacher?.message}>
+                  <Input {...register("training.teacher")} />
+                </Field>
+                <Field label="First teacher" hint="e.g. a parent" error={errors.training?.father?.message}>
+                  <Input {...register("training.father")} />
+                </Field>
+                <Field label="Grade" hint="e.g. B-High" error={errors.training?.grade?.message}>
+                  <Input {...register("training.grade")} />
+                </Field>
+                <Field
+                  label="Graded by"
+                  hint="e.g. All India Radio"
+                  error={errors.training?.grading_body?.message}
+                >
+                  <Input {...register("training.grading_body")} />
+                </Field>
+              </div>
+            </div>
 
             <Repeatable
               label="Awards"
@@ -376,6 +480,48 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
 
         <TabsContent value="business">
           <Card className="flex flex-col gap-5 p-5">
+            <div>
+              <p className="text-[13px] font-medium text-text">Teaching practice</p>
+              <p className="mt-0.5 text-[12px] text-faint">
+                The school search engines list for local queries — its own name,
+                description and courses.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="School name" error={errors.school?.name?.message}>
+                <Input {...register("school.name")} />
+              </Field>
+              <Field label="Also known as" error={errors.school?.alternate_name?.message}>
+                <Input {...register("school.alternate_name")} />
+              </Field>
+            </div>
+            <Field label="Description" error={errors.school?.description?.message}>
+              <Textarea rows={3} {...register("school.description")} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Image URL" error={errors.school?.image_url?.message}>
+                <Input {...register("school.image_url")} />
+              </Field>
+              <Field
+                label="Course list name"
+                hint="e.g. Tabla courses"
+                error={errors.school?.offer_catalog_name?.message}
+              >
+                <Input {...register("school.offer_catalog_name")} />
+              </Field>
+            </div>
+            <Controller
+              control={control}
+              name="school.offerings"
+              render={({ field }) => (
+                <Field label="Courses offered" hint="One entry per course">
+                  <StringList value={field.value} onChange={field.onChange} />
+                </Field>
+              )}
+            />
+          </Card>
+
+          <Card className="mt-4 flex flex-col gap-5 p-5">
             <Repeatable
               label="Opening hours"
               hint="A slot cannot cross midnight — split overnight hours into two entries."
@@ -443,6 +589,47 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
                   </Field>
                 )}
               />
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="images">
+          <Card className="flex flex-col gap-4 p-5">
+            <Field
+              label="Profile image URL"
+              hint="The artist's photo in search results and structured data."
+              error={errors.default_image_url?.message}
+            >
+              <Input {...register("default_image_url")} />
+            </Field>
+            <div>
+              <p className="text-[13px] font-medium text-text">Photo rights</p>
+              <p className="mt-0.5 text-[12px] text-faint">
+                Attached to every gallery photo so it can carry the licensable badge in
+                image search. Links may be site paths, e.g. /gallery#licence.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Credit" hint="Who took the photos" error={errors.image_credit_text?.message}>
+                <Input {...register("image_credit_text")} />
+              </Field>
+              <Field label="Copyright notice" error={errors.image_copyright_notice?.message}>
+                <Input {...register("image_copyright_notice")} />
+              </Field>
+              <Field
+                label="Licence terms link"
+                hint="Where the usage terms are written"
+                error={errors.image_license_url?.message}
+              >
+                <Input {...register("image_license_url")} />
+              </Field>
+              <Field
+                label="Licensing enquiries link"
+                hint="Where someone asks to use a photo"
+                error={errors.image_acquire_license_url?.message}
+              >
+                <Input {...register("image_acquire_license_url")} />
+              </Field>
             </div>
           </Card>
         </TabsContent>

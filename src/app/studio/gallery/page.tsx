@@ -9,6 +9,13 @@ import { UploadDropzone } from "./upload-dropzone";
 
 export const metadata = { title: "Gallery · Portfolio Admin" };
 
+const ROLE_HINTS: Record<PhotoRole, string> = {
+  gallery: "Shown on /gallery in this order, each one downloadable.",
+  hero: "Extra header photos, kept out of the public gallery.",
+  about: "Family-album scans for the About story — kept out of the gallery.",
+  classes: "Teaching photos, kept out of the public gallery.",
+};
+
 export default async function GalleryPage({
   searchParams,
 }: {
@@ -44,6 +51,9 @@ export default async function GalleryPage({
           </Link>
         ))}
       </div>
+      <p className="-mt-1 mb-4 text-[12px] text-faint">
+        {ROLE_HINTS[role]} Any photo can be picked as a page header or story photo under Pages.
+      </p>
 
       {photos.length === 0 ? (
         <Card>

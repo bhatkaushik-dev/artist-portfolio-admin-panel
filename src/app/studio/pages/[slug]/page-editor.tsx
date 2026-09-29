@@ -7,11 +7,14 @@ import { Card, Field, FormError, Input, Textarea } from "@/components/ui/base";
 import { SubmitButton, SwitchField, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/controls";
 import { updatePageAction } from "@/lib/actions/pages";
 import type { FormResult } from "@/lib/api/errors";
+import type { Photo } from "@/lib/schemas/media";
 import type { Page } from "@/lib/schemas/page";
 import { blocksJsonSchema } from "@/lib/schemas/page";
 import { diffKeys } from "@/lib/utils";
+import { BLOCK_EDITORS } from "./block-editors";
+import { PhotoPicker } from "./photo-picker";
 
-export function PageEditor({ page }: { page: Page }) {
+export function PageEditor({ page, photos }: { page: Page; photos: Photo[] }) {
   const [state, formAction] = useActionState<FormResult<null>, FormData>(updatePageAction, {
     ok: true,
     data: null,
@@ -22,27 +25,33 @@ export function PageEditor({ page }: { page: Page }) {
     () => JSON.stringify(page.blocks ?? {}, null, 2),
     [page.blocks],
   );
+  // The JSON text is the single source of truth; the Content tab edits it
+  // through a parsed view, so the two can never disagree.
   const [blocks, setBlocks] = useState(originalBlocks);
   const [published, setPublished] = useState(page.is_published);
   const [noindex, setNoindex] = useState(page.noindex);
+  const [headerPhoto, setHeaderPhoto] = useState<string | null>(page.header_photo_id);
 
   const blocksError = useMemo(() => {
     const result = blocksJsonSchema.safeParse(blocks);
     return result.success ? null : result.error.issues[0].message;
   }, [blocks]);
 
-  // Removing a key is the only irreversible edit here, so surface it up front.
-  const blockDiff = useMemo(() => {
+  const parsedBlocks = useMemo<Record<string, unknown> | null>(() => {
     if (blocksError) return null;
-    try {
-      return diffKeys(
-        (page.blocks ?? {}) as Record<string, unknown>,
-        blocks.trim() ? JSON.parse(blocks) : {},
-      );
-    } catch {
-      return null;
-    }
-  }, [blocks, blocksError, page.blocks]);
+    return blocks.trim() ? JSON.parse(blocks) : {};
+  }, [blocks, blocksError]);
+
+  // Removing a key is the only irreversible edit here, so surface it up front.
+  const blockDiff = useMemo(
+    () =>
+      parsedBlocks
+        ? diffKeys((page.blocks ?? {}) as Record<string, unknown>, parsedBlocks)
+        : null,
+    [parsedBlocks, page.blocks],
+  );
+
+  const ContentEditor = BLOCK_EDITORS[page.slug];
 
   useEffect(() => {
     if (state.ok && state.data === null) toast.success("Page saved");
@@ -54,44 +63,110 @@ export function PageEditor({ page }: { page: Page }) {
       <input type="hidden" name="slug" value={page.slug} />
       <input type="hidden" name="is_published" value={published ? "on" : ""} />
       <input type="hidden" name="noindex" value={noindex ? "on" : ""} />
+      <input type="hidden" name="header_photo_id" value={headerPhoto ?? ""} />
 
-      <Tabs defaultValue="copy">
+      <Tabs defaultValue="header">
         <TabsList className="mb-4">
-          <TabsTrigger value="copy">Copy</TabsTrigger>
+          <TabsTrigger value="header">Header</TabsTrigger>
+          {ContentEditor && (
+            <TabsTrigger value="content">
+              Content{errors?.blocks ? " ⚠" : ""}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="blocks">
-            Blocks{blocksError ? " ⚠" : ""}
+            JSON{blocksError ? " ⚠" : ""}
           </TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="copy">
+        {/* forceMount keeps every uncontrolled input mounted, so a field on a
+            tab that is not showing is still submitted with the form. */}
+        <TabsContent value="header" forceMount className="data-[state=inactive]:hidden">
           <Card className="flex flex-col gap-4 p-5">
-            <Field label="Title" required error={errors?.title}>
+            <Field
+              label="Page name"
+              required
+              hint="Used in navigation and breadcrumbs, not on the page itself."
+              error={errors?.title}
+            >
               <Input name="title" defaultValue={page.title} aria-invalid={Boolean(errors?.title)} />
             </Field>
-            <Field label="Subtitle" error={errors?.subtitle}>
-              <Input name="subtitle" defaultValue={page.subtitle ?? ""} />
-            </Field>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Field label="Eyebrow" hint="Small caps above the heading" error={errors?.eyebrow}>
+                <Input name="eyebrow" defaultValue={page.eyebrow ?? ""} />
+              </Field>
+              <Field label="Heading" hint="The page's main title" error={errors?.heading}>
+                <Input name="heading" defaultValue={page.heading ?? ""} />
+              </Field>
+              <Field label="Highlight" hint="Trailing words, set in gold" error={errors?.highlight}>
+                <Input name="highlight" defaultValue={page.highlight ?? ""} />
+              </Field>
+            </div>
+
             <Field label="Intro" error={errors?.intro}>
               <Textarea name="intro" rows={3} defaultValue={page.intro ?? ""} />
             </Field>
-            <Field label="Body" error={errors?.body}>
-              <Textarea name="body" rows={12} defaultValue={page.body ?? ""} />
+
+            <Field
+              label="Header photo"
+              hint="Shown beside the heading. Small scans are framed at their own size."
+              error={errors?.header_photo_id}
+            >
+              <PhotoPicker photos={photos} value={headerPhoto} onChange={setHeaderPhoto} />
             </Field>
+
             <SwitchField
               label="Published"
               hint="Unpublished pages are hidden from the public site."
               checked={published}
               onCheckedChange={setPublished}
             />
+
+            <details className="rounded-lg border border-border px-3 py-2">
+              <summary className="cursor-pointer text-[12px] text-muted">
+                Older fields — not shown by the current site design
+              </summary>
+              <div className="mt-3 flex flex-col gap-4">
+                <Field label="Subtitle" error={errors?.subtitle}>
+                  <Input name="subtitle" defaultValue={page.subtitle ?? ""} />
+                </Field>
+                <Field label="Body" error={errors?.body}>
+                  <Textarea name="body" rows={6} defaultValue={page.body ?? ""} />
+                </Field>
+              </div>
+            </details>
           </Card>
         </TabsContent>
 
-        <TabsContent value="blocks">
+        {ContentEditor && (
+          <TabsContent value="content">
+            <Card className="flex flex-col gap-5 p-5">
+              {parsedBlocks ? (
+                <ContentEditor
+                  value={parsedBlocks}
+                  onChange={(next) => setBlocks(JSON.stringify(next, null, 2))}
+                  photos={photos}
+                />
+              ) : (
+                <p className="text-[13px] text-danger">
+                  The JSON tab has a syntax error — fix it there to edit the content here.
+                </p>
+              )}
+              {errors?.blocks && <FormError>{errors.blocks}</FormError>}
+            </Card>
+          </TabsContent>
+        )}
+
+        <TabsContent value="blocks" forceMount className="data-[state=inactive]:hidden">
           <Card className="flex flex-col gap-3 p-5">
             <Field
               label="Blocks (JSON)"
-              hint="Structured content the site renders. Saved as a whole — this replaces the entire object."
+              hint={
+                ContentEditor
+                  ? "The raw data behind the Content tab. Keys the form doesn't show are kept as they are."
+                  : "Structured content the site renders. Saved as a whole — this replaces the entire object."
+              }
               error={blocksError ?? errors?.blocks ?? undefined}
             >
               <Textarea
@@ -129,7 +204,7 @@ export function PageEditor({ page }: { page: Page }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="seo">
+        <TabsContent value="seo" forceMount className="data-[state=inactive]:hidden">
           <Card className="flex flex-col gap-4 p-5">
             <Field label="SEO title" error={errors?.seo_title}>
               <Input name="seo_title" defaultValue={page.seo_title ?? ""} />
@@ -137,6 +212,18 @@ export function PageEditor({ page }: { page: Page }) {
             <Field label="Meta description" error={errors?.seo_description}>
               <Textarea name="seo_description" rows={3} defaultValue={page.seo_description ?? ""} />
             </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Social title" hint="Leave empty to reuse the SEO title" error={errors?.og_title}>
+                <Input name="og_title" defaultValue={page.og_title ?? ""} />
+              </Field>
+              <Field
+                label="Social description"
+                hint="Leave empty to reuse the meta description"
+                error={errors?.og_description}
+              >
+                <Textarea name="og_description" rows={2} defaultValue={page.og_description ?? ""} />
+              </Field>
+            </div>
             <Field label="Keywords" hint="Comma separated">
               <Input name="seo_keywords" defaultValue={page.seo_keywords.join(", ")} />
             </Field>
