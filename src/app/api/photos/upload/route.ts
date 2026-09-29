@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/api/client";
 import { toFormResult } from "@/lib/api/errors";
 import { photoReadSchema, photoUploadMetaSchema } from "@/lib/schemas/media";
 import { getTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -89,6 +90,7 @@ export async function POST(request: NextRequest) {
       schema: photoReadSchema,
       timeoutMs: 60_000,
     });
+    await refreshPublicSite();
     return NextResponse.json({ ok: true, data: photo });
   } catch (error) {
     const result = toFormResult(error);

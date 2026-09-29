@@ -6,6 +6,7 @@ import { createVideo, deleteVideo, syncVideo, updateVideo } from "@/lib/api/reso
 import { conflictOn, toFormResult, type FormResult } from "@/lib/api/errors";
 import { extractYoutubeId, videoCreateSchema, videoUpdateSchema } from "@/lib/schemas/media";
 import { requireTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 const PATH = "/studio/videos";
 
@@ -41,6 +42,7 @@ export async function createVideoAction(
   }
 
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -70,6 +72,7 @@ export async function updateVideoAction(
   }
 
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -86,6 +89,7 @@ export async function syncVideoAction(formData: FormData): Promise<FormResult<nu
   }
 
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -94,4 +98,5 @@ export async function deleteVideoAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await deleteVideo(id);
   revalidatePath(PATH);
+  await refreshPublicSite();
 }

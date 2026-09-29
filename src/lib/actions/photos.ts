@@ -6,6 +6,7 @@ import { deletePhoto, reorderPhoto, updatePhoto } from "@/lib/api/resources";
 import { toFormResult, type FormResult } from "@/lib/api/errors";
 import { photoReadSchema, photoUpdateSchema, type Photo } from "@/lib/schemas/media";
 import { requireTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 const PATH = "/studio/gallery";
 
@@ -37,6 +38,7 @@ export async function updatePhotoAction(
   // A role change moves the photo between buckets without renumbering either,
   // so both lists have to be re-read.
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -53,6 +55,7 @@ export async function reorderPhotoAction(
   try {
     const bucket = await reorderPhoto(id, order);
     revalidatePath(PATH);
+    await refreshPublicSite();
     return { ok: true, data: photoReadSchema.array().parse(bucket) };
   } catch (error) {
     return toFormResult(error);
@@ -64,4 +67,5 @@ export async function deletePhotoAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await deletePhoto(id);
   revalidatePath(PATH);
+  await refreshPublicSite();
 }

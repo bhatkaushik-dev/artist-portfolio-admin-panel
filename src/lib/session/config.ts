@@ -49,6 +49,23 @@ export type SessionData = {
   acting?: ActiveTenant & { until: number };
 };
 
+/**
+ * An absent or unsealable cookie yields an object with no fields, so a session
+ * only counts as valid when it carries both a mode and the credential that mode
+ * needs.
+ *
+ * Lives here, free of `next/headers`, because the proxy and the server-side
+ * guards must agree exactly. When they disagreed, a half-valid cookie bounced
+ * between `/login` (proxy: "signed in, go to the studio") and `/studio`
+ * (guard: "not signed in, go to login") forever.
+ */
+export function isLoggedIn(s: Partial<SessionData>): boolean {
+  const credential = s.auth === "google" ? s.token : s.key;
+  if (!credential) return false;
+  if (s.mode === "super") return true;
+  return s.mode === "tenant" && Boolean(s.tenant);
+}
+
 function requireSecret(): string {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {

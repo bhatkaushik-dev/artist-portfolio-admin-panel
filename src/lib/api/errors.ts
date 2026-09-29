@@ -1,3 +1,5 @@
+import { unstable_rethrow } from "next/navigation";
+
 /**
  * FastAPI reports failures two different ways, and the panel has to tell them
  * apart to put a message on the right input:
@@ -60,7 +62,22 @@ function isPydanticIssues(detail: unknown): detail is PydanticIssue[] {
   return Array.isArray(detail) && detail.every((d) => typeof d === "object" && d !== null);
 }
 
+/**
+ * For `promise.catch(orElse(fallback))`: degrade to `fallback` on failure, but
+ * never swallow a Next.js redirect — a 401 turns into one (see `apiFetch`), and
+ * it has to reach the framework to sign the person out.
+ */
+export function orElse<T>(fallback: T) {
+  return (error: unknown): T => {
+    unstable_rethrow(error);
+    return fallback;
+  };
+}
+
 export function toFormResult(error: unknown): FormResult<never> {
+  // A redirect (401 → sign out) must propagate, not become a form message.
+  unstable_rethrow(error);
+
   if (error instanceof ApiError) {
     const { status, detail } = error;
 

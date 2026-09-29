@@ -2,8 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getIronSession } from "iron-session";
 import { nextProxyCookies } from "iron-session";
 
-import { REFRESH_WINDOW_MS, type SessionData, sessionOptions } from "@/lib/session/config";
-import { refreshSessionToken } from "@/lib/auth/refresh";
+import {
+  SESSION_COOKIE,
+  type SessionData,
+  isLoggedIn,
+  sessionOptions,
+} from "@/lib/session/config";
+import { renewIfDue } from "@/lib/auth/refresh";
 
 /**
  * Route protection for navigation only.
@@ -21,39 +26,44 @@ export async function proxy(request: NextRequest) {
   );
 
   const { pathname, search } = request.nextUrl;
-  const loggedIn = session.mode === "super" || session.mode === "tenant";
-  const to = (path: string) => NextResponse.redirect(new URL(path, request.url));
 
-  if (!loggedIn) {
-    if (pathname === "/login") return response;
-    const next = encodeURIComponent(pathname + search);
-    return to(pathname === "/" ? "/login" : `/login?next=${next}`);
-  }
+  // iron-session writes cookies onto `response`, but a redirect is a different
+  // response. Without copying them across, a cleared session was never
+  // actually cleared in the browser: `/login?reason=expired` then saw the same
+  // dead cookie, "expired" it again and redirected to itself until the browser
+  // gave up with "too many redirects". A renewed token was lost the same way.
+  const to = (path: string) => {
+    const redirect = NextResponse.redirect(new URL(path, request.url));
+    for (const cookie of response.headers.getSetCookie()) {
+      redirect.headers.append("set-cookie", cookie);
+    }
+    return redirect;
+  };
+
+  let loggedIn = isLoggedIn(session);
+  let expired = false;
 
   // Server components cannot write cookies during a render, so a token nearing
   // expiry is renewed here — the one place in a navigation that can persist it.
-  if (
-    session.auth === "google" &&
-    session.token &&
-    (session.tokenExpiresAt ?? 0) - Date.now() < REFRESH_WINDOW_MS
-  ) {
-    const renewed = await refreshSessionToken(session.token);
-    if (renewed) {
-      session.token = renewed.access_token;
-      session.tokenExpiresAt = new Date(renewed.expires_at).getTime();
-      await session.save();
-    } else if ((session.tokenExpiresAt ?? 0) <= Date.now()) {
-      // Past its life and not renewable — a fresh sign-in is required.
-      session.destroy();
-      return to("/login?reason=expired");
-    }
+  if (loggedIn && (await renewIfDue(session)) === "dead") {
+    loggedIn = false;
+    expired = true;
   }
 
-  if (pathname === "/login") {
-    return to(session.mode === "super" ? "/artists" : "/studio");
+  if (!loggedIn) {
+    // Whatever is left in the cookie (lapsed token, stale shape, an old
+    // secret) is unusable. Drop it so the next visit starts clean.
+    if (request.cookies.has(SESSION_COOKIE)) session.destroy();
+
+    if (pathname === "/login") return response;
+    const params = new URLSearchParams();
+    if (expired) params.set("reason", "expired");
+    if (pathname !== "/") params.set("next", pathname + search);
+    const query = params.toString();
+    return to(query ? `/login?${query}` : "/login");
   }
 
-  if (pathname === "/") {
+  if (pathname === "/login" || pathname === "/") {
     return to(session.mode === "super" ? "/artists" : "/studio");
   }
 

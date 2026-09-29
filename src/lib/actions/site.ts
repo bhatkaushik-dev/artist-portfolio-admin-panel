@@ -6,6 +6,7 @@ import { updateSiteProfile } from "@/lib/api/resources";
 import { toFormResult, type FormResult } from "@/lib/api/errors";
 import { siteProfileUpdateSchema } from "@/lib/schemas/site";
 import { requireTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 /**
  * Takes the already-validated object from the client rather than FormData: the
@@ -40,5 +41,6 @@ export async function updateSiteProfileAction(
 
   revalidatePath("/studio/profile");
   revalidatePath("/studio");
+  await refreshPublicSite();
   return { ok: true, data: null };
 }

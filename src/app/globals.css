@@ -77,6 +77,42 @@
     border-radius: 4px;
   }
 
+  /* Tailwind v4's reset gives buttons `cursor: default`, so no button, tab,
+     switch or dialog close showed a hand on hover. Restore it for everything
+     clickable, in one place, instead of per component. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="switch"],
+  [role="menuitem"],
+  summary,
+  select:not(:disabled),
+  label:has(> input[type="file"]),
+  input[type="file"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
+  /* Touch screens have no hover, so a press has to show instead. The grey
+     flash browsers draw by default looks broken on this dark theme. */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  summary,
+  label {
+    -webkit-tap-highlight-color: transparent;
+  }
+  @media (pointer: coarse) {
+    a:active,
+    button:not(:disabled):active,
+    [role="tab"]:active,
+    summary:active {
+      opacity: 0.7;
+    }
+  }
+
   /* Numbers line up in tables without needing a per-cell utility. */
   th,
   td {

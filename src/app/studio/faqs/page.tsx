@@ -1,5 +1,6 @@
 import { Card, EmptyState, PageHeader } from "@/components/ui/base";
 import { listFaqs, listPages } from "@/lib/api/resources";
+import { orElse } from "@/lib/api/errors";
 import { FaqEditor } from "./faq-editor";
 import { CreateFaq } from "./create-faq";
 
@@ -8,7 +9,7 @@ export const metadata = { title: "FAQs · Portfolio Admin" };
 export default async function FaqsPage() {
   const [faqs, pages] = await Promise.all([
     listFaqs({ includeInactive: true }),
-    listPages().catch(() => []),
+    listPages().catch(orElse([])),
   ]);
   const slugs = pages.map((p) => p.slug);
 

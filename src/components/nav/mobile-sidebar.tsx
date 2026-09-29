@@ -49,7 +49,7 @@ export function MobileSidebar({ children }: { children: React.ReactNode }) {
           type="button"
           onClick={() => setOpen(true)}
           aria-label="Open menu"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-surface-hover hover:text-text"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-hover hover:text-text"
         >
           <Menu size={18} />
         </button>
@@ -77,7 +77,7 @@ export function MobileSidebar({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="text-muted hover:text-text md:hidden"
+            className="-m-2 rounded-lg p-2 text-muted transition-colors hover:bg-surface-hover hover:text-text md:hidden"
           >
             <X size={18} />
           </button>

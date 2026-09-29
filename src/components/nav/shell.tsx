@@ -14,6 +14,7 @@ import { logoutAction, stopActingAction } from "@/lib/actions/auth";
 import { Badge, Button } from "@/components/ui/base";
 import { MobileSidebar } from "./mobile-sidebar";
 import { NavLink } from "./nav-link";
+import { SessionKeeper } from "./session-keeper";
 
 const ICON = 15;
 
@@ -46,6 +47,7 @@ export function Shell({
 }) {
   return (
     <div className="flex min-h-screen">
+      <SessionKeeper />
       <MobileSidebar>
         {tenantName && (
           <div className="mx-3 mb-3 rounded-lg border border-border bg-bg px-3 py-2.5">

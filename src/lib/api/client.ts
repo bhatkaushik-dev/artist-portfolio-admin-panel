@@ -1,5 +1,6 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
 import type { ZodType } from "zod";
 
 import { getSession, getTenantContext } from "@/lib/session/session";
@@ -141,7 +142,10 @@ export async function apiFetch<T = unknown>(
       ? `token ${redact(headers.Authorization.slice(7))}`
       : `key ${redact(headers["X-Admin-Key"])}`;
     console.warn(`401 from ${method} ${path} using ${used}`);
-    throw new UnauthorizedError(await safeDetail(response));
+    // The session is dead as far as the backend is concerned. Send the person
+    // to sign in (clearing the cookie on the way) instead of an error screen.
+    // `unstable_rethrow` in the catch blocks lets this pass through them.
+    redirect("/api/auth/signout");
   }
 
   if (!response.ok) {

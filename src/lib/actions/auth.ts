@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { listTenantsWithKey, whoAmI } from "@/lib/api/resources";
-import { getSession } from "@/lib/session/session";
+import { clearSession, getSession } from "@/lib/session/session";
 import { impersonationTtlMs } from "@/lib/session/config";
 
 export type LoginState = { error?: string };
@@ -62,8 +62,7 @@ export async function loginAction(
 }
 
 export async function logoutAction() {
-  const session = await getSession();
-  session.destroy();
+  await clearSession();
   redirect("/login");
 }
 

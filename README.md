@@ -21,6 +21,8 @@ yarn dev
 | `SESSION_SECRET` | At least 32 characters; seals the session cookie |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth client; leave blank to hide the Google button |
 | `IMPERSONATION_TTL_MINUTES` | How long a super admin may act as an artist. Default 60 |
+| `PUBLIC_SITE_HOOKS` | JSON map of tenant slug → that artist's site revalidate URL, e.g. `{"kaushik-bhat":"https://kaushikbhat.in/api/revalidate"}`. Every content save pings it so the edit is live within seconds |
+| `PUBLIC_SITE_REVALIDATE_SECRET` | Shared with the site's `REVALIDATE_SECRET`. Without these two, sites still refresh on their own every 5 minutes |
 
 No admin key belongs in the environment. A leaked environment exposes no access
 to any artist's content.

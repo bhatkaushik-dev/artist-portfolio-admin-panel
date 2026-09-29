@@ -112,6 +112,13 @@ export function UploadDropzone({ role }: { role: PhotoRole }) {
 
     try {
       const response = await fetch("/api/photos/upload", { method: "POST", body: formData });
+      // A dead session comes back as a redirect through sign-out (followed by
+      // fetch) or a bare 401. Either way, go and sign in rather than report a
+      // confusing "upload failed".
+      if (response.redirected || response.status === 401) {
+        window.location.assign("/login?reason=expired");
+        return;
+      }
       const result = await response.json();
       if (!result.ok) {
         setError(result.formError ?? Object.values(result.fieldErrors ?? {})[0] ?? "Upload failed");

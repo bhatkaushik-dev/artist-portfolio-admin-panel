@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
 
   // Sealed and short-lived — this only has to survive the round trip to Google.
   const sealed = await sealData(
-    { state, verifier, next: nextPath?.startsWith("/") ? nextPath : undefined },
+    // Same-origin paths only: `//host` and `/\host` are read by browsers as
+    // another site, which would make the callback an open redirect.
+    { state, verifier, next: nextPath && /^\/(?![/\\])/.test(nextPath) ? nextPath : undefined },
     { password: process.env.SESSION_SECRET!, ttl: 600 },
   );
 

@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,28 @@ export function NavLink({
       )}
     >
       {icon}
-      {label}
+      <span className="flex-1">{label}</span>
+      <Pending />
     </Link>
+  );
+}
+
+/**
+ * Answers the tap straight away when the destination was not prefetched yet
+ * (a drawer link on a phone is off-screen until the drawer opens). Always
+ * rendered and faded in after a beat, so fast navigations show nothing and
+ * the row never shifts.
+ */
+function Pending() {
+  const { pending } = useLinkStatus();
+  return (
+    <Loader2
+      size={13}
+      aria-hidden
+      className={cn(
+        "shrink-0 animate-spin opacity-0 transition-opacity",
+        pending && "opacity-60 delay-100",
+      )}
+    />
   );
 }

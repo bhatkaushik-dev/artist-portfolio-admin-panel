@@ -7,8 +7,10 @@ import { getIronSession, type IronSession } from "iron-session";
 
 import {
   type ActiveTenant,
+  FLASH_COOKIE,
   type SessionData,
   flashOptions,
+  isLoggedIn,
   sessionOptions,
 } from "./config";
 
@@ -22,17 +24,6 @@ export const getSession = cache(
   async (): Promise<IronSession<SessionData>> =>
     getIronSession<SessionData>(await cookies(), sessionOptions()),
 );
-
-/**
- * An absent or unsealable cookie yields an object with no fields, so a session
- * only counts as valid when it carries both a mode and the key that mode needs.
- */
-function isLoggedIn(s: IronSession<SessionData>): boolean {
-  const credential = s.auth === "google" ? s.token : s.key;
-  if (!credential) return false;
-  if (s.mode === "super") return true;
-  return s.mode === "tenant" && Boolean(s.tenant);
-}
 
 export async function requireSession(): Promise<IronSession<SessionData>> {
   const session = await getSession();
@@ -96,6 +87,18 @@ export async function requireTenantContext(): Promise<TenantContext> {
     );
   }
   return context;
+}
+
+/**
+ * Everything a sign-out has to remove: the session and any credentials still
+ * waiting to be shown. Only callable where cookies are writable — a Server
+ * Action or Route Handler, never a server component render.
+ */
+export async function clearSession(): Promise<void> {
+  const session = await getSession();
+  session.destroy();
+  const store = await cookies();
+  if (store.has(FLASH_COOKIE)) store.delete(FLASH_COOKIE);
 }
 
 // --- One-shot credential handoff -------------------------------------------

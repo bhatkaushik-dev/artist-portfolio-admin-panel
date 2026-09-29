@@ -11,6 +11,7 @@ import {
   listPhotos,
   listVideos,
 } from "@/lib/api/resources";
+import { orElse } from "@/lib/api/errors";
 import type { EnquiryList } from "@/lib/schemas/enquiry";
 import type { Health } from "@/lib/schemas/tenant";
 import type { Page } from "@/lib/schemas/page";
@@ -27,12 +28,12 @@ export const metadata = { title: "Overview · Portfolio Admin" };
  * dashboard and none of them can reject unobserved.
  */
 export default function StudioDashboard() {
-  const health = getHealth().catch(() => null);
-  const pages = listPages().catch((): Page[] => []);
-  const photos = listPhotos({ includeInactive: true }).catch(() => []);
-  const videos = listVideos({ includeInactive: true }).catch(() => []);
-  const faqs = listFaqs({ includeInactive: true }).catch(() => []);
-  const enquiries = listEnquiries({ limit: 5 }).catch(() => null);
+  const health = getHealth().catch(orElse(null));
+  const pages = listPages().catch(orElse<Page[]>([]));
+  const photos = listPhotos({ includeInactive: true }).catch(orElse([]));
+  const videos = listVideos({ includeInactive: true }).catch(orElse([]));
+  const faqs = listFaqs({ includeInactive: true }).catch(orElse([]));
+  const enquiries = listEnquiries({ limit: 5 }).catch(orElse(null));
 
   const stats = [
     { label: "Pages", value: pages.then((p) => p.length), href: "/studio/pages" },

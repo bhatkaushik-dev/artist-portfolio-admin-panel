@@ -550,8 +550,8 @@ export function ProfileForm({ profile }: { profile: SiteProfile }) {
                             }
                             className={
                               on
-                                ? "rounded-md border border-accent/30 bg-accent-soft px-2 py-1 text-[11px] text-accent"
-                                : "rounded-md border border-border bg-surface px-2 py-1 text-[11px] text-muted hover:text-text"
+                                ? "rounded-md border border-accent/30 bg-accent-soft px-3 py-2 text-[12px] text-accent transition-colors hover:border-accent/60 md:px-2 md:py-1 md:text-[11px]"
+                                : "rounded-md border border-border bg-surface px-3 py-2 text-[12px] text-muted transition-colors hover:border-border-strong hover:text-text md:px-2 md:py-1 md:text-[11px]"
                             }
                           >
                             {day.slice(0, 3)}

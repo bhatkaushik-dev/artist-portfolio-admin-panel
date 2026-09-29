@@ -6,6 +6,7 @@ import { updatePage } from "@/lib/api/resources";
 import { toFormResult, type FormResult } from "@/lib/api/errors";
 import { blocksJsonSchema, pageUpdateSchema } from "@/lib/schemas/page";
 import { requireTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 /**
  * The API validates each page's block shapes and reports e.g.
@@ -78,5 +79,6 @@ export async function updatePageAction(
 
   revalidatePath("/studio/pages");
   revalidatePath(`/studio/pages/${slug}`);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }

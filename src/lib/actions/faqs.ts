@@ -6,6 +6,7 @@ import { createFaq, deleteFaq, updateFaq } from "@/lib/api/resources";
 import { toFormResult, type FormResult } from "@/lib/api/errors";
 import { faqCreateSchema, faqUpdateSchema } from "@/lib/schemas/faq";
 import { requireTenantContext } from "@/lib/session/session";
+import { refreshPublicSite } from "@/lib/public-site";
 
 const PATH = "/studio/faqs";
 
@@ -40,6 +41,7 @@ export async function createFaqAction(
   }
 
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -60,6 +62,7 @@ export async function updateFaqAction(
   }
 
   revalidatePath(PATH);
+  await refreshPublicSite();
   return { ok: true, data: null };
 }
 
@@ -68,4 +71,5 @@ export async function deleteFaqAction(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (id) await deleteFaq(id);
   revalidatePath(PATH);
+  await refreshPublicSite();
 }
