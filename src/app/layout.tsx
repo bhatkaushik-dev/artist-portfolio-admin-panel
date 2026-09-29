@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "sonner";
 
@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   title: "Portfolio Admin",
   description: "Content administration for the portfolio backend",
   robots: { index: false, follow: false },
+};
+
+// Most uploads happen from a phone: paint the browser chrome to match the app.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#16161a",
 };
 
 export default function RootLayout({

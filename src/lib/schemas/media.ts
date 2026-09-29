@@ -13,6 +13,8 @@ export const photoReadSchema = z
     id: z.string(),
     src: z.string(),
     download_url: z.string(),
+    /** ≤640px WebP for grids and pickers. */
+    thumb_url: z.string().nullish(),
     width: z.number().int(),
     height: z.number().int(),
     alt: z.string(),
@@ -23,7 +25,10 @@ export const photoReadSchema = z
     is_active: z.boolean(),
     created_at: isoDateTime,
   })
-  .loose();
+  .loose()
+  // The API already falls back to `src`; repeating it here keeps the panel
+  // working against an API deployed before thumbnails existed.
+  .transform((photo) => ({ ...photo, thumb_url: photo.thumb_url || photo.src }));
 
 export type Photo = z.infer<typeof photoReadSchema>;
 

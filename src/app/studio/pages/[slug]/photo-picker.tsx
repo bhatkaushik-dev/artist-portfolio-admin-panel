@@ -30,7 +30,7 @@ export function PhotoPicker({
       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-bg">
         {selected ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={selected.src} alt="" className="h-full w-full object-cover" />
+          <img src={selected.thumb_url} alt="" className="h-full w-full object-cover" />
         ) : (
           <ImageOff size={16} className="text-faint" />
         )}

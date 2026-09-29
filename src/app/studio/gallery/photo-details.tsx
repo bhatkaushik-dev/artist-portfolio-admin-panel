@@ -39,7 +39,7 @@ export function PhotoDetails({ photo, role }: { photo: Photo; role: PhotoRole })
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={photo.src}
+            src={photo.thumb_url}
             alt={photo.alt}
             className="max-h-48 w-full rounded-lg border border-border object-contain"
           />
@@ -48,7 +48,7 @@ export function PhotoDetails({ photo, role }: { photo: Photo; role: PhotoRole })
             <Input name="alt" defaultValue={photo.alt} aria-invalid={Boolean(errors?.alt)} />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Caption" error={errors?.caption}>
               <Input name="caption" defaultValue={photo.caption ?? ""} />
             </Field>

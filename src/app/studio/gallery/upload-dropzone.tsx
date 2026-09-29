@@ -19,18 +19,34 @@ import { formatBytes } from "@/lib/utils";
 const MAX_EDGE = 2560;
 const TARGET_BYTES = 4_000_000;
 
-type Prepared = { file: File; from: number; to: number; width: number; height: number };
+type Prepared = {
+  file: File;
+  from: number;
+  to: number;
+  width: number;
+  height: number;
+  /** Object URL for the preview; revoked whenever it is replaced or dropped. */
+  preview: string;
+};
 
 export function UploadDropzone({ role }: { role: PhotoRole }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
-  const [prepared, setPrepared] = useState<Prepared | null>(null);
+  const [prepared, setPreparedState] = useState<Prepared | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
+  function setPrepared(next: Prepared | null) {
+    setPreparedState((current) => {
+      if (current && current.preview !== next?.preview) URL.revokeObjectURL(current.preview);
+      return next;
+    });
+  }
+
   async function prepare(file: File) {
     setError(undefined);
+    setPrepared(null);
     setBusy(true);
     try {
       let source: Blob = file;
@@ -71,6 +87,7 @@ export function UploadDropzone({ role }: { role: PhotoRole }) {
         to: compressed.size,
         width: bitmap.width,
         height: bitmap.height,
+        preview: URL.createObjectURL(compressed),
       });
       bitmap.close();
     } catch (err) {
@@ -132,43 +149,56 @@ export function UploadDropzone({ role }: { role: PhotoRole }) {
 
       <DialogContent title="Upload a photo" description={`Added to the ${role} set.`}>
         <form action={upload} className="flex flex-col gap-4">
-          <Field label="Image" required>
+          {/* The whole panel is the tap target — the native file button is
+              tiny on a phone. `image/*` offers camera and photo library. */}
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-xl border border-dashed border-border-strong bg-bg text-center transition-colors hover:border-accent focus-within:border-accent">
             <input
               ref={inputRef}
               type="file"
               accept="image/*,.heic,.heif"
+              className="sr-only"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) void prepare(file);
               }}
-              className="w-full rounded-lg border border-border bg-bg px-3 py-2 text-[13px] file:mr-3 file:rounded-md file:border-0 file:bg-elevated file:px-3 file:py-1.5 file:text-[12px] file:text-text"
             />
-          </Field>
-
-          {busy && !prepared && (
-            <p className="flex items-center gap-2 text-[12px] text-muted">
-              <Loader2 size={13} className="animate-spin" />
-              Preparing image…
-            </p>
-          )}
+            {prepared ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={prepared.preview}
+                alt=""
+                className="max-h-56 w-full object-contain"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2 px-4 py-8">
+                {busy ? (
+                  <Loader2 size={22} className="animate-spin text-muted" />
+                ) : (
+                  <ImagePlus size={22} className="text-muted" />
+                )}
+                <span className="text-sm font-medium text-text">
+                  {busy ? "Preparing image…" : "Choose or take a photo"}
+                </span>
+                <span className="text-[12px] text-faint">
+                  Phone photos are fine — they are resized before upload.
+                </span>
+              </div>
+            )}
+          </label>
 
           {prepared && (
-            <p className="rounded-lg border border-border bg-bg px-3 py-2 text-[12px] text-muted">
+            <p className="-mt-2 text-[12px] text-muted">
               {formatBytes(prepared.from)} → {formatBytes(prepared.to)} ·{" "}
-              {prepared.width}×{prepared.height}
-              {prepared.from > prepared.to && (
-                <span className="mt-0.5 block text-faint">
-                  Resized to {MAX_EDGE}px, which is what the server stores anyway.
-                </span>
-              )}
+              {prepared.width}×{prepared.height} ·{" "}
+              <span className="text-accent">Tap the image to change it</span>
             </p>
           )}
 
           <Field label="Alt text" required hint="Describes the image for screen readers and search.">
-            <Input name="alt" required maxLength={320} />
+            <Input name="alt" required maxLength={320} enterKeyHint="next" />
           </Field>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Caption">
               <Input name="caption" maxLength={500} />
             </Field>
@@ -185,7 +215,7 @@ export function UploadDropzone({ role }: { role: PhotoRole }) {
             </Button>
             <Button type="submit" variant="primary" disabled={!prepared || busy}>
               {busy && <Loader2 size={14} className="animate-spin" />}
-              {busy ? "Uploading…" : "Upload"}
+              {busy ? (prepared ? "Uploading…" : "Preparing…") : "Upload"}
             </Button>
           </DialogFooter>
         </form>

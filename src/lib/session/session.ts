@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getIronSession, type IronSession } from "iron-session";
@@ -11,9 +12,16 @@ import {
   sessionOptions,
 } from "./config";
 
-export async function getSession(): Promise<IronSession<SessionData>> {
-  return getIronSession<SessionData>(await cookies(), sessionOptions());
-}
+/**
+ * Memoised per request. A single render reaches this from the layout, the page
+ * and every `apiFetch` credential lookup — a dozen cookie unseals on the
+ * dashboard alone — and they all want the same object. Writes still go through
+ * the one instance, so a save is seen by anything that reads after it.
+ */
+export const getSession = cache(
+  async (): Promise<IronSession<SessionData>> =>
+    getIronSession<SessionData>(await cookies(), sessionOptions()),
+);
 
 /**
  * An absent or unsealable cookie yields an object with no fields, so a session

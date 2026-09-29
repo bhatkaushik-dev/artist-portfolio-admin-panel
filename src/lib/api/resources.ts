@@ -100,8 +100,15 @@ export const listPages = () =>
 export const getPage = (slug: string) =>
   apiFetch(`/pages/${slug}`, { auth: "site", schema: pageReadSchema });
 
+/** Validates every block server-side, so it takes several DB round-trips. */
 export const updatePage = (slug: string, body: unknown) =>
-  apiFetch(`/pages/${slug}`, { auth: "admin", method: "PUT", body, schema: pageReadSchema });
+  apiFetch(`/pages/${slug}`, {
+    auth: "admin",
+    method: "PUT",
+    body,
+    schema: pageReadSchema,
+    timeoutMs: 60_000,
+  });
 
 // --- Photos -----------------------------------------------------------------
 

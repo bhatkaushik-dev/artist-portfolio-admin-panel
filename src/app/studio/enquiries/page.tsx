@@ -41,7 +41,7 @@ export default async function EnquiriesPage({
         description={`${data.total} total from the public contact form.`}
       />
 
-      <div className="mb-4 flex items-center gap-1.5">
+      <div className="-mx-4 mb-4 flex items-center gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <FilterTab href={href({})} active={!status} label="All" />
         {ENQUIRY_STATUSES.map((value) => (
           <FilterTab
@@ -106,7 +106,7 @@ function FilterTab({ href, active, label }: { href: string; active: boolean; lab
     <Link
       href={href}
       className={cn(
-        "rounded-lg border px-3 py-1.5 text-[13px] font-medium capitalize transition-colors",
+        "shrink-0 rounded-lg border px-4 py-2.5 text-[13px] font-medium capitalize transition-colors md:px-3 md:py-1.5",
         active
           ? "border-accent/30 bg-accent-soft text-accent"
           : "border-border bg-surface text-muted hover:text-text",

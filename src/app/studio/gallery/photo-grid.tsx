@@ -115,11 +115,13 @@ function SortablePhoto({
             next/image would add Vercel cost for no benefit. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={photo.src}
+          src={photo.thumb_url}
           alt={photo.alt}
           width={photo.width}
           height={photo.height}
           loading="lazy"
+          decoding="async"
+          draggable={false}
           className="h-full w-full object-cover"
         />
         <button
@@ -127,9 +129,12 @@ function SortablePhoto({
           {...attributes}
           {...listeners}
           aria-label={`Reorder ${photo.alt}`}
-          className="absolute left-2 top-2 cursor-grab rounded-md bg-black/60 p-1.5 text-white opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
+          // Touch screens have no hover, so the handle is always shown there
+          // and sized for a thumb. `touch-none` stops the browser treating the
+          // drag as a page scroll.
+          className="absolute left-1.5 top-1.5 cursor-grab touch-none rounded-md bg-black/60 p-2.5 text-white transition-opacity pointer-fine:left-2 pointer-fine:top-2 pointer-fine:p-1.5 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:focus-visible:opacity-100"
         >
-          <GripVertical size={13} />
+          <GripVertical size={15} />
         </button>
         {!photo.is_active && (
           <span className="absolute right-2 top-2">

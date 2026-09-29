@@ -14,9 +14,11 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   danger: "bg-danger-soft text-danger hover:bg-danger hover:text-white border-danger/40",
 };
 
+// Mobile first: finger-sized on touch screens, the compact desktop sizes from
+// `md` up.
 const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-[13px]",
-  md: "h-9 px-4 text-sm",
+  sm: "h-10 px-3 text-[13px] md:h-8",
+  md: "h-11 px-4 text-sm md:h-9",
 };
 
 export function Button({
@@ -50,22 +52,28 @@ const FIELD_BASE =
   "transition-colors hover:border-border-strong focus:border-accent focus:outline-none " +
   "disabled:opacity-50 aria-[invalid=true]:border-danger";
 
+// iOS Safari zooms the whole page into any field whose text is under 16px, and
+// leaves it zoomed after. `text-base` below `md` is what prevents that.
+const FIELD_TEXT = "text-base md:text-sm";
+
 export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(FIELD_BASE, "h-9 text-sm", className)} {...props} />;
+  return <input className={cn(FIELD_BASE, FIELD_TEXT, "h-11 md:h-9", className)} {...props} />;
 }
 
 export function Textarea({
   className,
   ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(FIELD_BASE, "py-2 text-sm leading-relaxed", className)} {...props} />;
+  return (
+    <textarea className={cn(FIELD_BASE, FIELD_TEXT, "py-2 leading-relaxed", className)} {...props} />
+  );
 }
 
 export function NativeSelect({
   className,
   ...props
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(FIELD_BASE, "h-9 pr-8 text-sm", className)} {...props} />;
+  return <select className={cn(FIELD_BASE, FIELD_TEXT, "h-11 pr-8 md:h-9", className)} {...props} />;
 }
 
 // --- Field wrapper ----------------------------------------------------------
@@ -144,12 +152,14 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4">
-      <div>
+    // Stacked on phones so the primary action (e.g. "Upload photo") is not
+    // squeezed beside the description.
+    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
+      <div className="min-w-0">
         <h1 className="text-xl font-semibold tracking-tight text-text">{title}</h1>
         {description && <p className="mt-1 text-[13px] text-muted">{description}</p>}
       </div>
-      {action}
+      {action && <div className="shrink-0">{action}</div>}
     </div>
   );
 }
@@ -212,4 +222,36 @@ export function FormError({ children }: { children?: React.ReactNode }) {
 
 export function Separator({ className }: { className?: string }) {
   return <div className={cn("h-px bg-border", className)} />;
+}
+
+// --- Loading ----------------------------------------------------------------
+
+export function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden className={cn("animate-pulse rounded-md bg-elevated", className)} />;
+}
+
+/**
+ * Generic route fallback. It only has to look like "the page is arriving" —
+ * its job is to make a tap feel answered while the server fetches.
+ */
+export function PageSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div role="status" aria-label="Loading">
+      <div className="mb-6">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="mt-2 h-4 w-64 max-w-full" />
+      </div>
+      <div className="card divide-y divide-border">
+        {Array.from({ length: rows }, (_, i) => (
+          <div key={i} className="flex items-center gap-3 px-5 py-4">
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="mt-2 h-3 w-1/3" />
+            </div>
+            <Skeleton className="h-4 w-16" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
